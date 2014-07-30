@@ -13,8 +13,8 @@ from NCountSimul import *
 ############################################################
 ### Fiducial Cosmological parameters
 
-z_min = 0.0              #minimum redshift
-z_max = 2.0               #maximum redshift
+z_min = 0.1              #minimum redshift
+z_max = 1.5              #maximum redshift
 H0 = 70.0                #Hubble parameter
 Omegam = 0.25            #Dark matter density
 OmegaL = 0.7             #Dark energy density
@@ -32,7 +32,7 @@ epsilon = 20
 N_tries = 100
 
 #mass bin
-dm = [10**14, 10**14.25, 10**14.5, 10**14.75,  10**15, 10**15.25,  10**15.5, 10**15.75 ]
+dm = [10**14, 10**14.25, 10**14.5, 10**14.75,  10**15, 10**15.25,  10**15.5, 10**15.75, 10**16.0 ]
 
 
 #output file
@@ -44,7 +44,7 @@ area = 100
 ##############################################################
 
 #new simulation object
-ncount = NCountSimul (z_min, z_max, log ( dm[0] ), log ( dm[-1]* (10**0.25) ), area )
+ncount = NCountSimul (z_min, z_max, log ( dm[0] ), log ( dm[-1] ), area )
 
 #Generate fiducial data
 data_fid = numpy.array( ncount.simulation( z_max, H0, Omegab, Omegam, 1-Omegam, Tgamma0, ns, sigma8, w )[1] )

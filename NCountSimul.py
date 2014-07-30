@@ -70,7 +70,6 @@ class NCountSimul:
         #sim.append ([ z_true.get(i), lnM_true.get (i), z_obs.get (i, 0), lnM_obs.get (i, 0)])
         sim.append ([ z_obs.get (i, 0), lnM_obs.get (i, 0)])
 
-
     del lnM_true
     del z_true
     del lnM_obs
@@ -85,10 +84,10 @@ def summary( fid_data, sim_data, mass_bin ):
     mass = [ numpy.log( item ) for item in mass_bin ]
 
     #separate fiducial data
-    fid_data_bin = numpy.array([ [ item[0] for item in fid_data  if item[1] >= mass[ i ] ] for i in range( len( mass ) ) ])
-
+    fid_data_bin = numpy.array([ [ item[0] for item in fid_data  if (item[1] >= mass[ i ] and item[1] < mass[i+1]) ] for i in range (len(mass) -1) ])
+    
     #separate simulated data
-    sim_data_bin = numpy.array([ [ item[0] for item in sim_data  if item[1] >= mass[ i ] ] for i in range( len( mass ) ) ])
+    sim_data_bin = numpy.array([ [ item[0] for item in sim_data  if (item[1] >= mass[ i ] and item[1] < mass[i+1]) ] for i in range (len(mass) -1) ])
 
     for ii in range( len( fid_data_bin ) ):
         print 'sim = ' + str( len( sim_data_bin[ ii ] ) ) + '   fid = ' + str( len( fid_data_bin[ ii ] ) )
