@@ -2,8 +2,10 @@ from gi.repository import NumCosmo as Nc
 from gi.repository import NumCosmoMath as Ncm
 from numpy import pi
 import numpy
+import random
 
 from scipy.stats import anderson_ksamp
+from scipy.stats.mstats import mquantiles
 
 class NCountSimul:
 
@@ -77,17 +79,17 @@ class NCountSimul:
     
     return header, sim 
 
-def summary( fid_data, sim_data, mass_bin ):
+def summary_anderson( fid_data, sim_data, mass_bin ):
 
 
     #convert mass bins to natural log
     mass = [ numpy.log( item ) for item in mass_bin ]
 
     #separate fiducial data
-    fid_data_bin = numpy.array([ [ item[0] for item in fid_data  if (item[1] >= mass[ i ] and item[1] < mass[i+1]) ] for i in range (len(mass) -1) ])
+    fid_data_bin = numpy.array([ [ item[0] for item in fid_data  if item[1] >= mass[ i ] ] for i in range (len(mass) -1) ])
     
     #separate simulated data
-    sim_data_bin = numpy.array([ [ item[0] for item in sim_data  if (item[1] >= mass[ i ] and item[1] < mass[i+1]) ] for i in range (len(mass) -1) ])
+    sim_data_bin = numpy.array([ [ item[0] for item in sim_data  if item[1] >= mass[ i ] ] for i in range (len(mass) -1) ])
 
     for ii in range( len( fid_data_bin ) ):
         print 'sim = ' + str( len( sim_data_bin[ ii ] ) ) + '   fid = ' + str( len( fid_data_bin[ ii ] ) )
@@ -97,12 +99,219 @@ def summary( fid_data, sim_data, mass_bin ):
 
     return res 
 
-def deviation( summary_res, choice ):
 
-    #choice -> which diagnostic to use
+def summary_quantile( data, mass_bin, q_list ):
+    #Summary statistics by as the quantiles in q_list.
+    #Calculates the quantiles for a distribution of redshift for observed masses above a mass threshold given by mass_bin.
+    #
+    #input: data -> list of list of floats 
+    #               [ redshit, log_obs_Mass ]
+    #       mass_bin -> list of floats
+    #               [ mass_threshold_in_base_10 ]   
+    #       q_list -> list of float
+    #               [ quantiles ]
+    #
+    #output: res -> list of list of float
+    #               [ calculated_quantiles_for_each_mass_threshold ]
+    #        pop -> list of float
+    #               [ fraction_of_number_of_data_for_each_mass_threshold ]    
 
-    valid_res = numpy.array( [ item for item in summary_res if str( item[0] ) != 'nan' and str( item[1] ) != 'nan' ])
 
-    return sum( valid_res[:, choice ] )
+    #convert mass bins to natural log
+    mass = [ numpy.log( item ) for item in mass_bin ]
 
+    #separate fiducial data
+    data_bin = numpy.array([ [ item[0] for item in data  if item[1] >= mass[ i ] ] for i in range (len(mass) -1) ])
+
+    #for item in data_bin:
+    #    print ' bin = ' + str( len( item ) )
+  
+    #calculate quantile 
+    res = [ mquantiles( elem, prob=q_list ) if len( elem ) > 0  else [ 0 for jj in q_list]  for elem in data_bin ] 
+    pop = [ float( len( data_bin[ i ] ) )/sum( [ len( data_bin[ k ] ) for k in range( len( data_bin ) ) ] )  for i in range( len( data_bin ) ) ]    
+
+    return res, pop
+
+
+
+def deviation_quantile( summary_fid, summary_sim ):
+    #Calculates the distance between 2 data sets given the quantiles calculated by summary_quantile function.
+    #Distances are calculated for each mass threshold, e.g. mass1, as
+    #    sqrt( sum_in_i( ( fraction_data_mass1_fid * quantile[ i ]_mass1_fid - fraction_data_mass1_sim * quantile[ i ]_mass1_sim ) ** 2 ))
+    #
+    #
+    #input: summmary_fid, summary_sim -> list of list of float 
+    #                                    [ calculated_quantiles_for_each_mass_threshold ] 
+    #                                    outputs from summary_quantile for 2 distinct data sets
+    #
+    #output: distance -> list of float
+    #                    [ distances_for_each_mass_bin ]             
+
+  
+    distance = [ numpy.sqrt( sum( [ ( summary_fid[1][i] * summary_fid[0][ i ][ j ] - summary_sim[1][i] * summary_sim[0][ i ][ j ] ) ** 2  for j in range( len( summary_fid[0][ i ] ) ) ] ) ) for i in range( len( summary_fid[0] ) ) ]
+    
+    return distance
+
+def choose_par( hyper_par, dist ):
+    """
+    Sample cosmological parameter from prior. 
+    Current constraints are:
+        0 <= om < 1
+        0 <= ol < 1
+        0 <= om + ol < 1
+        w <= 0
+
+    input:
+        hyper_par : list of list of float
+            hyper_par[0][0], hyper_par[0][1] : om1, om2 -> float, float: parameters that describe prior for matter energy density
+            hyper_par[1][0], hyper_par[1][1] : ol1, ol2 -> float, float:parameters that describe prior for dark energy density
+            hyper_par[2][0], hyper_par[2][1] : w1, w2   -> float, float: that describe prior for dark energy equation of state
+        dist     -> string: prior distribution:  'normal' -> gaussian 
+                                                 'flat'   -> top-hat
+
+    output:
+        om_try -> float: dark matter density 
+        ol_try -> float: dark energy density
+        w_try  -> float: equation of state parameter
+    """
+
+
+    om_try = 0.0
+    w_try  = 0.0
+    ol_try = 0.0
+
+    flag = False
+    while flag == False:
+        
+        if dist == 'normal':
+            om_try = random.normalvariate( hyper_par[0][0], hyper_par[0][1] )
+            ol_try = random.normalvariate( hyper_par[1][0], hyper_par[1][1] ) 
+            w_try  = random.normalvariate( hyper_par[2][0], hyper_par[2][1] )
+            
+
+        elif dist == 'flat':
+            om_try = random.randrange(  hyper_par[0][0], hyper_par[0][1] )
+            ol_try = random.randrange(  hyper_par[1][0], hyper_par[1][1] )
+            w_try  = random.randrange(  hyper_par[2][0], hyper_par[2][1] ) 
+
+        if om_try <= 0.0 or om_try > 1.0 or ol_try <= 0.0 or ol_try > 1.0 or w_try > 0.0 or w_try < -1.5 or ol_try + om_try > 1.0:
+            flag = False 
+        else:
+            flag = True
+
+    return om_try, ol_try, w_try
+
+
+
+def set_distances( summary_fid, mass_bin, quantile_list, omX, olX, wX, zmin, zmax, area, ncount1, H0=70.0, Omegab=0.05, Tgamma0=2.72, ns=1.0, sigma8=0.9 ):
+    """
+    Calculate summary statistics difference between the fiducial data and a specific model defined by the inputed cosmological parameters.
+
+    input: 
+           summary_fid: list of float outputed by function summary_quantile
+                        [ fraction_of_number_of_data_for_each_mass_threshold ]    
+
+           mass_bin: list of floats
+                     [ mass_threshold_in_base_10 ]  
+ 
+           quantile_list: list of float
+                          [ quantiles ]
+     
+           omX: float
+                model dark matter density
+ 
+           olX: float
+                model dark energy density
+
+           wX:  float
+                model dark energy equation of state parameter
+
+    output:  
+           difference: float
+                       summary statistic difference between the fiducial data and inputed cosmological model as outputed by function deviation_quantile 
+        
+    """
+
+    #simulate instance of data
+    data_sim = numpy.array( ncount1.simulation( zmax, H0, Omegab, omX, olX, Tgamma0, ns, sigma8, wX )[1] )
+
+    #calculate summary statistics for simulated data
+    summ_sim = summary_quantile( data_sim, mass_bin, quantile_list )
+    
+    #calculate deviation for every mass threshold
+    difference = deviation_quantile( summary_fid, summ_sim ) 
+
+    del summ_sim
+    del data_sim
+  
+    return difference
+
+def choose_surv_par( summary_fid, mass_bin, quantile_list, tolerance, n_tries, hyper_par, dist, zmin, zmax, area, ncount1  ):
+    """
+    Select model parameters surviving summary statistics distance threshold.
+
+    input:
+           summary_fid: list of float outputed by function summary_quantile
+                        [ fraction_of_number_of_data_for_each_mass_threshold ]    
+
+           mass_bin: list of floats
+                     [ mass_threshold_in_base_10 ]  
+ 
+           quantile_list: list of float
+                          [ quantiles ]
+
+           tolerance: float
+                      maximum threshold of summary statistic distance. Parameter values are kept if the calculated model distance is lower.
+
+           n_tries: int
+                    number of surviving parameter values
+
+           hyper_par : list of list of float
+            hyper_par[0][0], hyper_par[0][1] : om1, om2 -> float, float: parameters that describe prior for matter energy density
+            hyper_par[1][0], hyper_par[1][1] : ol1, ol2 -> float, float:parameters that describe prior for dark energy density
+            hyper_par[2][0], hyper_par[2][1] : w1, w2   -> float, float: that describe prior for dark energy equation of state
+
+           dist: string
+                 prior distribution:  'normal' -> gaussian 
+                                      'flat'   -> top-hat
+
+    output:
+           result: list of list of float
+                   parameter and distance surviving threshold requirement
+                   [[ dark_matter_density, dark_energ_density, equation_of_state_parameter, distance ]]  
+
+           data: list of list of float   
+                 simulated data for surviving model 
+                 [[ redshift, mass]]
+    """
+
+    #list to store results
+    result = []
+    data_all = []
+
+    while len( result ) < n_tries :
+
+        print 'tries = ' + str( len( result ) )
+
+        #choose model parameters
+        par_list = list( choose_par( hyper_par, dist )  )
+
+        print par_list
+
+        #calculate summary statistics distance to fiducial data  
+        d = set_distances( summary_fid, mass_bin, quantile_list, par_list[0], par_list[1], par_list[2], zmin, zmax, area, ncount1  )
+        d1 = sum( d )
+
+        if d1 <=  tolerance:
+
+            
+            print '        dist = ' + str( d1 )
+
+            #add distance to parameter list
+            par_list.append( d1 )
+
+            #append parameters if tolerance is satisfied
+            result.append( par_list  )
+    
+    return result
 
