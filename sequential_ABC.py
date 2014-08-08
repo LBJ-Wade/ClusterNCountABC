@@ -25,9 +25,9 @@ z_max = 1.32             #maximum redshift
 H0 = 71.15               #Hubble parameter
 Omegam = 0.262           #Dark matter density
 Omegab = 0.0439          #Baryon density
-Tgamma0 = 2.72           #
-ns = 0.97                # spectral index 
-sigma8 = 0.807           # sigma8
+Tgamma0 = 2.725          #Radiation temperature today
+ns = 0.97                #spectral index 
+sigma8 = 0.807           #sigma8
 w = -1.01                #Dark energy equation of state     
 
 #mass bin

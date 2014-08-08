@@ -203,7 +203,7 @@ def choose_par( hyper_par, dist ):
 
 
 
-def set_distances( summary_fid, mass_bin, quantile_list, omX, olX, wX, zmin, zmax, area, ncount1, H0=71.15, Omegab=0.0439, Tgamma0=2.72, ns=0.97, sigma8=0.807 ):
+def set_distances( summary_fid, mass_bin, quantile_list, omX, olX, wX, zmin, zmax, area, ncount1, H0=71.15, Omegab=0.0439, Tgamma0=2.725, ns=0.97, sigma8=0.807 ):
     """
     Calculate summary statistics difference between the fiducial data and a specific model defined by the inputed cosmological parameters.
 
