@@ -20,7 +20,7 @@ class NCountSimul:
     mulf = Nc.MultiplicityFunc.new_from_name ("NcMultiplicityFuncTinkerCrit{'Delta':<500.0>}")
     mf = Nc.MassFunction.new (dist, vp, gf, mulf)
     
-    cluster_m = Nc.ClusterMass.new_from_name ("NcClusterMassLnnormal{'lnMobs-min':<% 20.15g>, 'lnMobs-max':<% 20.15g>}" % (lnM_min, lnM_max))
+    cluster_m = Nc.ClusterMass.new_from_name ("NcClusterMassNodist{'lnM-min':<% 20.15g>, 'lnM-max':<% 20.15g>}" % (lnM_min, lnM_max))
     cluster_z = Nc.ClusterRedshift.new_from_name ("NcClusterPhotozGaussGlobal{'pz-min':<%f>, 'pz-max':<%f>, 'z-bias':<0.0>, 'sigma0':<0.05>}" % (z_min, z_max))
     cad = Nc.ClusterAbundance.new (mf, None, cluster_z, cluster_m)
 
@@ -29,9 +29,6 @@ class NCountSimul:
     self.mset = Ncm.MSet ()
     self.mset.set (self.cosmo)
     self.mset.set (cluster_m)
-
-    cluster_m.props.bias = 0.0
-    cluster_m.props.sigma = 0.24
 
     self.rng = Ncm.RNG.pool_get ("example_ca_sampling");
 

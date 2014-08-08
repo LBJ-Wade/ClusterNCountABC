@@ -18,27 +18,27 @@ from NCountSimul import *
 import pylab as plt
 
 ############################################################
-### Fiducial Cosmological parameters
+### Fiducial Cosmological parameters: ref. arXiv:1203.5775 (table 5. wCDM CMB+BAO+H0+SNeIa+SPTcl), Tgamma0 and ns are not given.
 
-z_min = 0.1              #minimum redshift
-z_max = 1.5              #maximum redshift
-H0 = 70.0                #Hubble parameter
-Omegam = 0.25            #Dark matter density
-OmegaL = 0.7             #Dark energy density
-Omegab = 0.05            #Baryon density
+z_min = 0.3              #minimum redshift
+z_max = 1.32             #maximum redshift
+H0 = 71.15               #Hubble parameter
+Omegam = 0.262           #Dark matter density
+Omegab = 0.0439          #Baryon density
 Tgamma0 = 2.72           #
-ns = 1.0                 #
-sigma8 = 0.9             #
-w = -1.0                 #Dark energy equation of state     
+ns = 0.97                # spectral index 
+sigma8 = 0.807           # sigma8
+w = -1.01                #Dark energy equation of state     
 
 #mass bin
-dm = [5*10**13, 10**14, 10**14.25, 10**14.5, 10**14.75,  10**15, 10**15.25,  10**15.5, 10**15.75 ]
+#dm = [5*10**13, 10**14, 10**14.25, 10**14.5, 10**14.75,  10**15, 10**15.25,  10**15.5, 10**15.75 ]
+dm = [10**14.3, 10**14.5, 10**14.7,  10**14.9, 10**15.1, 10**15.3,  10**15.5, 10**15.7 ]
 
 #quantile list
 quant_list = [ 0.02, 0.09, 0.25, 0.5, 0.75, 0.91, 0.98]
 
 #sky area
-area = 300
+area = 2500
 
 #output file
 path1 = 'sequential_ABC_res.dat'
@@ -57,7 +57,7 @@ epsilon_ini = 1.0		#Starting tolerance
 ##############################################################
 
 #new simulation object
-ncount = NCountSimul (z_min, z_max, log ( dm[0] ), log ( 4*10**15 ), area )
+ncount = NCountSimul (z_min, z_max, log ( dm[0] ), log ( 10**16 ), area )
 
 #Generate fiducial data
 data_fid = numpy.array( ncount.simulation( z_max, H0, Omegab, Omegam, 1-Omegam, Tgamma0, ns, sigma8, w )[1] )
